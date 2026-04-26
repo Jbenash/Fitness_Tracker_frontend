@@ -3,15 +3,26 @@ import { motion } from 'framer-motion';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../store';
 import { fetchActivities } from '../store/slices/activitySlice';
-import { Flame, Clock, TrendingUp, Calendar } from 'lucide-react';
+import { fetchActivityRecommendation, clearCurrentRecommendation } from '../store/slices/aiSlice';
+import { Flame, Clock, TrendingUp, Calendar, ArrowRight } from 'lucide-react';
+import RecommendationModal from '../components/RecommendationModal';
 
 const Dashboard: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { items: activities, loading } = useSelector((state: RootState) => state.activities);
+  const { items: activities, loading: activitiesLoading } = useSelector((state: RootState) => state.activities);
+  const { currentRecommendation, loading: aiLoading } = useSelector((state: RootState) => state.ai);
 
   useEffect(() => {
     dispatch(fetchActivities());
   }, [dispatch]);
+
+  const handleActivityClick = (activityId: string) => {
+    dispatch(fetchActivityRecommendation(activityId));
+  };
+
+  const handleCloseModal = () => {
+    dispatch(clearCurrentRecommendation());
+  };
 
   const totalCalories = activities.reduce((acc, curr) => acc + curr.caloriesBurnt, 0);
   const totalDuration = activities.reduce((acc, curr) => acc + curr.duration, 0);
@@ -71,7 +82,7 @@ const Dashboard: React.FC = () => {
         </div>
         
         <div className="space-y-4">
-          {loading ? (
+          {activitiesLoading ? (
             <div className="flex justify-center py-20">
                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
             </div>
@@ -86,10 +97,11 @@ const Dashboard: React.FC = () => {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="glass-card flex justify-between items-center px-8 py-5"
+                onClick={() => handleActivityClick(activity.id)}
+                className="glass-card flex justify-between items-center px-8 py-5 cursor-pointer hover:border-primary/40 hover:bg-white/[0.04] transition-all group"
               >
                 <div className="flex items-center gap-6">
-                  <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
+                  <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center border border-white/10 group-hover:border-primary/30 group-hover:bg-primary/5 transition-colors">
                     <TrendingUp size={24} className="text-primary" />
                   </div>
                   <div>
@@ -99,15 +111,24 @@ const Dashboard: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 text-rose-500 font-black text-xl">
-                  <Flame size={20} />
-                  {activity.caloriesBurnt}
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-2 text-rose-500 font-black text-xl">
+                    <Flame size={20} />
+                    {activity.caloriesBurnt}
+                  </div>
+                  <ArrowRight size={20} className="text-slate-600 group-hover:text-primary transition-colors" />
                 </div>
               </motion.div>
             ))
           )}
         </div>
       </section>
+
+      <RecommendationModal 
+        recommendation={currentRecommendation} 
+        loading={aiLoading} 
+        onClose={handleCloseModal} 
+      />
     </div>
   );
 };

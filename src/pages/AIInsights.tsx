@@ -8,7 +8,7 @@ import { Sparkles, CheckCircle2, AlertCircle, Lightbulb, Zap } from 'lucide-reac
 const AIInsights: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { userId } = useSelector((state: RootState) => state.auth);
-  const { recommendations, loading } = useSelector((state: RootState) => state.ai);
+  const { recommendations, loading, error } = useSelector((state: RootState) => state.ai);
 
   useEffect(() => {
     dispatch(fetchAIInsights(userId));
@@ -22,14 +22,21 @@ const AIInsights: React.FC = () => {
             <div className="bg-gradient-to-br from-indigo-500 to-purple-500 p-2 rounded-lg shadow-lg shadow-indigo-500/20">
               <Sparkles className="text-white" size={24} />
             </div>
-            <span className="text-indigo-400 font-bold tracking-widest uppercase text-xs">AI-Powered Analysis</span>
+            <span className="text-indigo-400 font-bold tracking-widest uppercase text-xs">Activity Intelligence</span>
           </div>
-          <h1 className="gradient-text text-5xl font-black">Performance Insights</h1>
+          <h1 className="gradient-text text-5xl font-black">Coaching Hub</h1>
         </div>
         <p className="text-slate-400 max-w-md">
-          Our Gemini-driven analysis examines your activity patterns to provide safety and performance optimizations.
+          Personalized recommendations tailored to your specific activities and performance patterns.
         </p>
       </header>
+
+      {error && (
+        <div className="mb-8 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center gap-3">
+          <AlertCircle size={20} />
+          <p className="font-medium">{error}</p>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-32 gap-4">

@@ -116,7 +116,7 @@ const RecommendationModal: React.FC<RecommendationModalProps> = ({ recommendatio
   );
 };
 
-const InsightBox = ({ title, items, icon, color }: any) => {
+const InsightBox = ({ title, items = [], icon, color }: any) => {
   const colors: any = {
     emerald: 'text-emerald-400 bg-emerald-400/5 border-emerald-400/10',
     amber: 'text-amber-400 bg-amber-400/5 border-amber-400/10',
@@ -130,7 +130,7 @@ const InsightBox = ({ title, items, icon, color }: any) => {
         <h4 className="font-black text-[10px] uppercase tracking-widest">{title}</h4>
       </div>
       <ul className="space-y-2">
-        {items.map((item: string, i: number) => (
+        {items && items.map((item: string, i: number) => (
           <li key={i} className="text-sm text-slate-400 flex gap-2 leading-snug">
             <span className={colors[color].split(' ')[0]}>•</span>
             {item}

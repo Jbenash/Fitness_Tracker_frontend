@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../store';
-import { addActivity } from '../store/slices/activitySlice';
-import { Send, Activity as ActivityIcon, ChevronLeft } from 'lucide-react';
+import { addActivity, updateExistingActivity } from '../store/slices/activitySlice';
+import { Send, Activity as ActivityIcon, ChevronLeft, Save } from 'lucide-react';
+import { useNotifications } from '../context/NotificationContext';
 
 const activityTypes = [
   'RUNNING', 'WALKING', 'CYCLING', 'SWIMMING', 
@@ -14,8 +15,12 @@ const activityTypes = [
 
 const LogActivity: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
+  const { showNotification } = useNotifications();
   const { userId } = useSelector((state: RootState) => state.auth);
+  
+  const editActivity = location.state?.editActivity;
   
   const [formData, setFormData] = useState({
     type: 'RUNNING',
@@ -24,18 +29,37 @@ const LogActivity: React.FC = () => {
   });
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (editActivity) {
+      setFormData({
+        type: editActivity.type,
+        duration: editActivity.duration,
+        caloriesBurnt: editActivity.caloriesBurnt,
+      });
+    }
+  }, [editActivity]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await dispatch(addActivity({
-        ...formData,
-        userId: userId
-      })).unwrap();
+      if (editActivity) {
+        await dispatch(updateExistingActivity({
+          id: editActivity.id,
+          data: { ...formData, userId }
+        })).unwrap();
+        showNotification('Activity updated successfully!', 'success');
+      } else {
+        await dispatch(addActivity({
+          ...formData,
+          userId: userId
+        })).unwrap();
+        showNotification('New activity logged! Great job.', 'success');
+      }
       navigate('/');
     } catch (err) {
       console.error(err);
-      alert('Failed to log activity. Please check if your backend is running.');
+      showNotification(`Failed to ${editActivity ? 'update' : 'log'} activity.`, 'error');
     } finally {
       setLoading(false);
     }
@@ -52,8 +76,12 @@ const LogActivity: React.FC = () => {
       </button>
 
       <header className="mb-10 text-center">
-        <h1 className="gradient-text text-4xl font-black mb-3">Track Your Progress</h1>
-        <p className="text-slate-400">Consistency is what separates the elite from the rest.</p>
+        <h1 className="gradient-text text-4xl font-black mb-3">
+          {editActivity ? 'Edit Your Activity' : 'Track Your Progress'}
+        </h1>
+        <p className="text-slate-400">
+          {editActivity ? 'Refine your stats to keep your records accurate.' : 'Consistency is what separates the elite from the rest.'}
+        </p>
       </header>
 
       <motion.div 
@@ -107,12 +135,12 @@ const LogActivity: React.FC = () => {
             {loading ? (
               <div className="flex items-center gap-2">
                 <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-white"></div>
-                <span>Logging...</span>
+                <span>{editActivity ? 'Updating...' : 'Logging...'}</span>
               </div>
             ) : (
               <>
-                <Send size={20} />
-                <span>Save Activity Session</span>
+                {editActivity ? <Save size={20} /> : <Send size={20} />}
+                <span>{editActivity ? 'Update Activity Details' : 'Save Activity Session'}</span>
               </>
             )}
           </button>

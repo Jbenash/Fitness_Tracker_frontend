@@ -42,6 +42,8 @@ export const activityService = {
   trackActivity: (data: ActivityRequest) => api.post<ActivityResponse>('/api/activities', data),
   getAllActivities: () => api.get<ActivityResponse[]>('/api/activities'),
   getActivity: (id: string) => api.get<ActivityResponse>(`/api/activities/${id}`),
+  deleteActivity: (id: string) => api.delete(`/api/activities/${id}`),
+  updateActivity: (id: string, data: Partial<ActivityRequest>) => api.put<ActivityResponse>(`/api/activities/${id}`, data),
 };
 
 export const aiService = {

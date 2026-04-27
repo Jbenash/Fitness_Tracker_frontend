@@ -4,11 +4,16 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../store';
 import { fetchActivities } from '../store/slices/activitySlice';
 import { fetchActivityRecommendation, clearCurrentRecommendation } from '../store/slices/aiSlice';
-import { Flame, Clock, TrendingUp, Calendar, ArrowRight } from 'lucide-react';
 import RecommendationModal from '../components/RecommendationModal';
+import { deleteActivity } from '../store/slices/activitySlice';
+import { Flame, Clock, TrendingUp, Calendar, ArrowRight, Pencil, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useNotifications } from '../context/NotificationContext';
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
+  const { showNotification, confirm } = useNotifications();
   const { items: activities, loading: activitiesLoading } = useSelector((state: RootState) => state.activities);
   const { currentRecommendation, loading: aiLoading } = useSelector((state: RootState) => state.ai);
 
@@ -18,6 +23,27 @@ const Dashboard: React.FC = () => {
 
   const handleActivityClick = (activityId: string) => {
     dispatch(fetchActivityRecommendation(activityId));
+  };
+
+  const handleEdit = (e: React.MouseEvent, activity: any) => {
+    e.stopPropagation();
+    navigate('/log', { state: { editActivity: activity } });
+  };
+
+  const handleDelete = async (e: React.MouseEvent, activityId: string) => {
+    e.stopPropagation();
+    confirm({
+      title: 'Delete Activity',
+      message: 'Are you sure you want to permanently remove this workout session?',
+      onConfirm: async () => {
+        try {
+          await dispatch(deleteActivity(activityId)).unwrap();
+          showNotification('Activity deleted successfully', 'success');
+        } catch (err) {
+          showNotification('Failed to delete activity', 'error');
+        }
+      }
+    });
   };
 
   const handleCloseModal = () => {
@@ -111,12 +137,30 @@ const Dashboard: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-6">
-                  <div className="flex items-center gap-2 text-rose-500 font-black text-xl">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 text-rose-500 font-black text-xl mr-4">
                     <Flame size={20} />
                     {activity.caloriesBurnt}
                   </div>
-                  <ArrowRight size={20} className="text-slate-600 group-hover:text-primary transition-colors" />
+                  
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={(e) => handleEdit(e, activity)}
+                      className="p-2 rounded-lg bg-white/5 hover:bg-indigo-500/20 text-slate-400 hover:text-indigo-400 transition-all border border-transparent hover:border-indigo-500/30"
+                      title="Edit Activity"
+                    >
+                      <Pencil size={18} />
+                    </button>
+                    <button 
+                      onClick={(e) => handleDelete(e, activity.id)}
+                      className="p-2 rounded-lg bg-white/5 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition-all border border-transparent hover:border-rose-500/30"
+                      title="Delete Activity"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                    <div className="w-px h-8 bg-white/10 mx-2" />
+                    <ArrowRight size={20} className="text-slate-600 group-hover:text-primary transition-colors" />
+                  </div>
                 </div>
               </motion.div>
             ))

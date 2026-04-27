@@ -37,6 +37,30 @@ export const addActivity = createAsyncThunk(
   }
 );
 
+export const deleteActivity = createAsyncThunk(
+  'activities/delete',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      await activityService.deleteActivity(id);
+      return id;
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const updateExistingActivity = createAsyncThunk(
+  'activities/update',
+  async ({ id, data }: { id: string; data: Partial<ActivityRequest> }, { rejectWithValue }) => {
+    try {
+      const response = await activityService.updateActivity(id, data);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const activitySlice = createSlice({
   name: 'activities',
   initialState,
@@ -56,6 +80,15 @@ const activitySlice = createSlice({
       })
       .addCase(addActivity.fulfilled, (state, action: PayloadAction<ActivityResponse>) => {
         state.items.unshift(action.payload);
+      })
+      .addCase(deleteActivity.fulfilled, (state, action: PayloadAction<string>) => {
+        state.items = state.items.filter(item => item.id !== action.payload);
+      })
+      .addCase(updateExistingActivity.fulfilled, (state, action: PayloadAction<ActivityResponse>) => {
+        const index = state.items.findIndex(item => item.id === action.payload.id);
+        if (index !== -1) {
+          state.items[index] = action.payload;
+        }
       });
   },
 });
